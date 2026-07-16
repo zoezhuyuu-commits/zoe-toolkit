@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <title>Zoe Toolkit</title>
 <style>
   :root {
@@ -54,7 +55,8 @@
 
   .app { position:relative; z-index:1; max-width:420px; margin:0 auto; padding:0 16px 80px; }
 
-  .header { padding:48px 0 6px; }
+  .header { padding:48px 0 6px; position:relative; }
+  .header.header--collapsed { padding:12px 0 0; }
   .header-date { font-size:12px; color:var(--text-muted); letter-spacing:0.4px; }
   .header-title { font-family:Georgia,'Times New Roman',serif; font-size:26px; font-weight:400; font-style:italic; color:var(--text-primary); margin-top:2px; }
 
@@ -179,6 +181,32 @@
 
   @media (prefers-reduced-motion:reduce) { .card,.sidebar { transition:none; } }
 
+  /* Dashboard hero background + liquid glass */
+  .dash-bg { position:fixed; inset:0; z-index:0; pointer-events:none; display:none; }
+  .dash-bg.active { display:block; }
+  .dash-bg img { width:100%; height:100%; object-fit:cover; object-position:center 78%; filter:saturate(0.55) brightness(1.14) contrast(0.92); }
+  .dash-bg::after { content:''; position:absolute; inset:0; background:rgba(250,245,243,0.6); }
+  @media (prefers-color-scheme: dark) { .dash-bg::after { background:rgba(26,21,22,0.72); } }
+  :root[data-theme="dark"] .dash-bg::after { background:rgba(26,21,22,0.72); }
+  :root[data-theme="light"] .dash-bg::after { background:rgba(250,245,243,0.6); }
+
+  .header--onbg .header-date, .header--onbg .header-title { text-shadow:0 1px 12px rgba(255,255,255,0.5); }
+
+  #page-dashboard .card {
+    background:rgba(255,255,255,0.32);
+    backdrop-filter:blur(18px) saturate(160%);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid rgba(255,255,255,0.55);
+    box-shadow:0 8px 28px rgba(180,140,130,0.15), inset 0 1px 0 rgba(255,255,255,0.65);
+  }
+  #page-dashboard .card:hover { background:rgba(255,255,255,0.44); }
+  @media (prefers-color-scheme: dark) {
+    #page-dashboard .card { background:rgba(45,35,33,0.35); border-color:rgba(255,255,255,0.12); box-shadow:0 8px 28px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08); }
+    #page-dashboard .card:hover { background:rgba(45,35,33,0.48); }
+  }
+  :root[data-theme="dark"] #page-dashboard .card { background:rgba(45,35,33,0.35); border-color:rgba(255,255,255,0.12); box-shadow:0 8px 28px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08); }
+  :root[data-theme="dark"] #page-dashboard .card:hover { background:rgba(45,35,33,0.48); }
+
   /* Chat page */
   .chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 220px); min-height:280px; }
   .chat-messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:4px 2px 16px; }
@@ -206,7 +234,8 @@
 </style>
 
 <div class="app" style="position:relative;">
-  <header class="header">
+  <div class="dash-bg active" id="dashBg"><img src="assets/dashboard-bg.jpg" alt=""></div>
+  <header class="header header--onbg" id="pageHeader">
     <div class="header-date" id="dateDisplay"></div>
     <div class="header-title" id="pageTitle">Zoe's Toolkit</div>
   </header>
@@ -343,7 +372,6 @@
 
   <!-- Chat -->
   <div class="page" id="page-chat">
-    <div class="section-label">陪伴</div>
     <div class="chat-wrap">
       <div class="chat-messages" id="chatMessages"></div>
     </div>
@@ -384,7 +412,7 @@
   <button class="sidebar-item" data-page="countdown" onclick="navigate('countdown')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>倒计时</button>
   <button class="sidebar-item" data-page="vault" onclick="navigate('vault')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>保险箱</button>
   <div class="sidebar-section">陪伴</div>
-  <button class="sidebar-item" data-page="chat" onclick="navigate('chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>💬 聊天</button>
+  <button class="sidebar-item" data-page="chat" onclick="navigate('chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>聊天</button>
   <div class="sidebar-section">系统</div>
   <button class="sidebar-item" data-page="settings" onclick="navigate('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>设置</button>
 </nav>
@@ -426,13 +454,18 @@
 
 <script>
 // ===== Navigation =====
-const titles = { dashboard:"Zoe's Toolkit", exchange:'汇率换算', countdown:'倒计时', vault:'保险箱', weight:'体重记录', period:'经期记录', health:'步数 · 心率 · 睡眠', settings:'设置', chat:'💬 聊天' };
+const titles = { dashboard:"Zoe's Toolkit", exchange:'汇率换算', countdown:'倒计时', vault:'保险箱', weight:'体重记录', period:'经期记录', health:'步数 · 心率 · 睡眠', settings:'设置', chat:'聊天' };
 
 function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const el = document.getElementById('page-' + page);
   if (el) el.classList.add('active');
   document.getElementById('pageTitle').textContent = titles[page] || "Zoe's Toolkit";
+  document.getElementById('dateDisplay').style.display = page === 'chat' ? 'none' : '';
+  document.getElementById('pageTitle').style.display = page === 'chat' ? 'none' : '';
+  document.getElementById('pageHeader').classList.toggle('header--collapsed', page === 'chat');
+  document.getElementById('pageHeader').classList.toggle('header--onbg', page === 'dashboard');
+  document.getElementById('dashBg').classList.toggle('active', page === 'dashboard');
   document.querySelectorAll('.sidebar-item').forEach(i => {
     i.classList.toggle('active', i.dataset.page === page);
   });
@@ -579,8 +612,7 @@ function saveWeight(){
   if(!w)return;
   const data=getWeights();
   const today=new Date().toISOString().slice(0,10);
-  const existing=data.findIndex(d=>d.date===today);
-  if(existing>=0){data[existing].weight=w;}else{data.push({date:today,weight:w});}
+  data.push({date:today,weight:w});
   localStorage.setItem('zt_weights',JSON.stringify(data));
   document.getElementById('weightInput').value='';
   renderWeight();updateDash();
@@ -698,6 +730,9 @@ function drawSakura() {
   const app=document.querySelector('.app');
   let layer=app.querySelector('.sakura-layer');
   if(!layer){layer=document.createElement('div');layer.className='sakura-layer';const c=document.createElement('canvas');layer.appendChild(c);app.appendChild(layer);}
+  const isDash = document.getElementById('page-dashboard').classList.contains('active');
+  layer.style.display = isDash ? 'none' : '';
+  if (isDash) return;
   const canvas=layer.querySelector('canvas');
   const ctx=canvas.getContext('2d');
   function rand(a,b){return a+Math.random()*(b-a);}
