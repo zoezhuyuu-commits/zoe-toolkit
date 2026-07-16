@@ -178,6 +178,31 @@
   .modal-title { font-size:16px; font-weight:600; margin-bottom:16px; color:var(--text-primary); }
 
   @media (prefers-reduced-motion:reduce) { .card,.sidebar { transition:none; } }
+
+  /* Chat page */
+  .chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 220px); min-height:280px; }
+  .chat-messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:4px 2px 16px; }
+  .chat-msg { display:flex; gap:8px; max-width:82%; }
+  .chat-msg.me { align-self:flex-end; flex-direction:row-reverse; }
+  .chat-msg.ai { align-self:flex-start; }
+  .chat-avatar { width:28px; height:28px; border-radius:50%; background:var(--accent-pale); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .chat-bubble-col { display:flex; flex-direction:column; min-width:0; }
+  .chat-msg.me .chat-bubble-col { align-items:flex-end; }
+  .chat-msg.ai .chat-bubble-col { align-items:flex-start; }
+  .chat-bubble { padding:10px 14px; border-radius:16px; font-size:14px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+  .chat-msg.me .chat-bubble { background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+  .chat-msg.ai .chat-bubble { background:var(--bg-card); border:1px solid var(--card-border); color:var(--text-primary); border-bottom-left-radius:4px; }
+  .chat-time { font-size:10px; color:var(--text-muted); margin-top:3px; padding:0 4px; }
+
+  .chat-input-bar { position:fixed; bottom:0; left:0; right:0; z-index:150; background:var(--bg); border-top:1px solid var(--card-border); padding:10px 16px calc(10px + env(safe-area-inset-bottom)); display:none; }
+  .chat-input-bar.active { display:block; }
+  .chat-input-row { max-width:420px; margin:0 auto; display:flex; gap:8px; align-items:center; }
+  .chat-input { flex:1; padding:10px 14px; border-radius:20px; border:1px solid var(--card-border); background:var(--bg-card); color:var(--text-primary); font-size:14px; font-family:inherit; outline:none; transition:border-color 0.2s; }
+  .chat-input:focus { border-color:var(--accent); }
+  .chat-input::placeholder { color:var(--text-muted); }
+  .chat-send-btn { width:38px; height:38px; border-radius:50%; border:none; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:opacity 0.2s; }
+  .chat-send-btn:hover { opacity:0.9; }
+  .chat-send-btn svg { width:16px; height:16px; }
 </style>
 
 <div class="app" style="position:relative;">
@@ -316,6 +341,14 @@
     <div id="periodHistory"></div>
   </div>
 
+  <!-- Chat -->
+  <div class="page" id="page-chat">
+    <div class="section-label">陪伴</div>
+    <div class="chat-wrap">
+      <div class="chat-messages" id="chatMessages"></div>
+    </div>
+  </div>
+
   <!-- Settings -->
   <div class="page" id="page-settings">
     <div class="section-label">设置</div>
@@ -350,9 +383,21 @@
   <button class="sidebar-item" data-page="exchange" onclick="navigate('exchange')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 17L17 17"/><polyline points="13 21 17 17 13 13"/><path d="M22 7L7 7"/><polyline points="11 3 7 7 11 11"/></svg>汇率换算</button>
   <button class="sidebar-item" data-page="countdown" onclick="navigate('countdown')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>倒计时</button>
   <button class="sidebar-item" data-page="vault" onclick="navigate('vault')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>保险箱</button>
+  <div class="sidebar-section">陪伴</div>
+  <button class="sidebar-item" data-page="chat" onclick="navigate('chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>💬 聊天</button>
   <div class="sidebar-section">系统</div>
   <button class="sidebar-item" data-page="settings" onclick="navigate('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>设置</button>
 </nav>
+
+<!-- Chat input bar -->
+<div class="chat-input-bar" id="chatInputBar">
+  <div class="chat-input-row">
+    <input class="chat-input" type="text" id="chatInput" placeholder="说点什么…" onkeydown="handleChatKey(event)">
+    <button class="chat-send-btn" onclick="sendChatMsg()" title="发送">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
 
 <!-- Modals -->
 <div class="modal-overlay" id="cdModal">
@@ -381,7 +426,7 @@
 
 <script>
 // ===== Navigation =====
-const titles = { dashboard:"Zoe's Toolkit", exchange:'汇率换算', countdown:'倒计时', vault:'保险箱', weight:'体重记录', period:'经期记录', health:'步数 · 心率 · 睡眠', settings:'设置' };
+const titles = { dashboard:"Zoe's Toolkit", exchange:'汇率换算', countdown:'倒计时', vault:'保险箱', weight:'体重记录', period:'经期记录', health:'步数 · 心率 · 睡眠', settings:'设置', chat:'💬 聊天' };
 
 function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -397,6 +442,8 @@ function navigate(page) {
   if (page === 'period') renderPeriod();
   if (page === 'exchange') calcFx();
   if (page === 'dashboard') updateDash();
+  document.getElementById('chatInputBar').classList.toggle('active', page === 'chat');
+  if (page === 'chat') { scrollChatBottom(); setTimeout(() => document.getElementById('chatInput').focus(), 100); }
   setTimeout(() => drawSakura(), 50);
 }
 
@@ -675,6 +722,61 @@ function drawSakura() {
     drawDot(bx+gapX*0.35,by+gapY*0.6,rand(0.18,0.3));
     drawDot(bx+gapX*0.65,by+gapY*0.15,rand(0.15,0.25));
   }}
+}
+
+// ===== Chat =====
+function chatNowTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function scrollChatBottom(){const el=document.getElementById('chatMessages');if(el)el.scrollTop=el.scrollHeight;}
+function appendChatMsg(role,text,time){
+  const wrap=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className='chat-msg '+role;
+  div.innerHTML = (role==='ai'?'<div class="chat-avatar">💬</div>':'')
+    + '<div class="chat-bubble-col"><div class="chat-bubble"></div><div class="chat-time"></div></div>';
+  wrap.appendChild(div);
+  div.querySelector('.chat-bubble').textContent = text;
+  div.querySelector('.chat-time').textContent = time;
+  scrollChatBottom();
+  return div.querySelector('.chat-bubble');
+}
+function handleChatKey(e){ if(e.key==='Enter'){ e.preventDefault(); sendChatMsg(); } }
+async function sendChatMsg(){
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  appendChatMsg('me', text, chatNowTime());
+  const aiBubble = appendChatMsg('ai', '', chatNowTime());
+  try {
+    const resp = await fetch('/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ text })
+    });
+    if(!resp.ok || !resp.body) throw new Error('bad response');
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf='', full='';
+    while(true){
+      const {value, done} = await reader.read();
+      if(done)break;
+      buf += decoder.decode(value, {stream:true});
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data:'))continue;
+        const data = line.slice(5).trim();
+        if(!data || data==='[DONE]')continue;
+        let piece = data;
+        try { const obj = JSON.parse(data); piece = obj.text ?? obj.content ?? obj.delta ?? ''; } catch(e) {}
+        full += piece;
+        aiBubble.textContent = full;
+        scrollChatBottom();
+      }
+    }
+  } catch(e) {
+    aiBubble.textContent = '（后端还没连接，等后端启动后再试～）';
+  }
 }
 
 // Init
