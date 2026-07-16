@@ -1,0 +1,684 @@
+<title>Zoe Toolkit</title>
+<style>
+  :root {
+    --bg: #faf5f3;
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --card-border: rgba(210, 180, 175, 0.2);
+    --card-shadow: rgba(180, 140, 130, 0.08);
+    --card-hover: rgba(255, 255, 255, 0.95);
+    --text-primary: #3d2c2a;
+    --text-secondary: #8a706b;
+    --text-muted: #c0a8a2;
+    --accent: #c27080;
+    --accent-light: #e8b0b8;
+    --accent-pale: rgba(194, 112, 128, 0.1);
+    --water-blue: #6aaccc;
+    --health-green: #72b37e;
+    --period-rose: #c27080;
+    --weight-amber: #c9a472;
+    --sleep-indigo: #8a96c0;
+    --countdown-purple: #a882b8;
+    --danger: #cc6060;
+    --radius: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1516; --bg-card: rgba(45,35,33,0.85); --card-border: rgba(120,90,85,0.2);
+      --card-shadow: rgba(0,0,0,0.2); --card-hover: rgba(55,42,40,0.95);
+      --text-primary: #f0e4e0; --text-secondary: #b09890; --text-muted: #6a5550;
+      --accent: #e09098; --accent-light: #8a4550; --accent-pale: rgba(224,144,152,0.1);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1516; --bg-card: rgba(45,35,33,0.85); --card-border: rgba(120,90,85,0.2);
+    --card-shadow: rgba(0,0,0,0.2); --card-hover: rgba(55,42,40,0.95);
+    --text-primary: #f0e4e0; --text-secondary: #b09890; --text-muted: #6a5550;
+    --accent: #e09098; --accent-light: #8a4550; --accent-pale: rgba(224,144,152,0.1);
+  }
+  :root[data-theme="light"] {
+    --bg: #faf5f3; --bg-card: rgba(255,255,255,0.85); --card-border: rgba(210,180,175,0.2);
+    --card-shadow: rgba(180,140,130,0.08); --card-hover: rgba(255,255,255,0.95);
+    --text-primary: #3d2c2a; --text-secondary: #8a706b; --text-muted: #c0a8a2;
+    --accent: #c27080; --accent-light: #e8b0b8; --accent-pale: rgba(194,112,128,0.1);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system,'SF Pro Display','PingFang SC','Noto Sans SC',sans-serif;
+    background: var(--bg); min-height:100vh; color: var(--text-primary);
+    overflow-x:hidden; position:relative;
+  }
+
+  .sakura-layer { position:absolute; top:0; left:0; width:100%; pointer-events:none; z-index:10; opacity:0.45; }
+  .sakura-layer canvas { display:block; width:100%; }
+
+  .app { position:relative; z-index:1; max-width:420px; margin:0 auto; padding:0 16px 80px; }
+
+  .header { padding:48px 0 6px; }
+  .header-date { font-size:12px; color:var(--text-muted); letter-spacing:0.4px; }
+  .header-title { font-family:Georgia,'Times New Roman',serif; font-size:26px; font-weight:400; font-style:italic; color:var(--text-primary); margin-top:2px; }
+
+  .section-label { font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin:22px 0 10px 2px; }
+
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  .card {
+    background:var(--bg-card); border:1px solid var(--card-border); border-radius:var(--radius);
+    padding:14px; cursor:pointer; position:relative; overflow:hidden;
+    transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
+    box-shadow:0 1px 6px var(--card-shadow);
+  }
+  .card:hover { background:var(--card-hover); transform:translateY(-1px); box-shadow:0 6px 20px var(--card-shadow); }
+  .card:active { transform:translateY(0); }
+  .card--span { grid-column:1/-1; }
+  .card--row { display:flex; align-items:center; gap:10px; }
+  .card--row .c-icon { margin-bottom:0; }
+  .card--static { cursor:default; }
+  .card--static:hover { transform:none; }
+
+  .c-icon { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; flex-shrink:0; }
+  .c-icon svg { width:15px; height:15px; }
+  .c-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .c-label { font-size:11px; color:var(--text-muted); }
+  .c-big { font-family:Georgia,'Times New Roman',serif; font-size:22px; font-weight:400; color:var(--text-primary); line-height:1.1; }
+  .c-unit { font-size:12px; font-family:-apple-system,sans-serif; color:var(--text-muted); font-weight:400; }
+
+  .ic-step { background:rgba(114,179,126,0.1); color:var(--health-green); }
+  .ic-hr { background:var(--accent-pale); color:var(--accent); }
+  .ic-sl { background:rgba(138,150,192,0.1); color:var(--sleep-indigo); }
+  .ic-wa { background:rgba(106,172,204,0.1); color:var(--water-blue); }
+  .ic-wt { background:rgba(201,164,114,0.1); color:var(--weight-amber); }
+  .ic-pe { background:var(--accent-pale); color:var(--period-rose); }
+
+  .mini-chart { display:flex; align-items:flex-end; gap:2px; height:28px; margin-top:8px; }
+  .mini-bar { flex:1; border-radius:2px; min-height:3px; }
+  .sparkline { margin-top:8px; }
+  .sparkline svg { width:100%; height:28px; }
+  .badge { display:inline-block; font-size:10px; font-weight:500; padding:2px 8px; border-radius:20px; margin-top:4px; }
+  .badge--rose { background:var(--accent-pale); color:var(--period-rose); }
+  .badge--green { color:var(--health-green); }
+
+  /* Sidebar */
+  .sidebar-toggle { position:fixed; top:16px; left:16px; z-index:200; width:36px; height:36px; border-radius:10px; border:none; background:var(--bg-card); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 6px var(--card-shadow); }
+  .sidebar-toggle:hover { background:var(--card-hover); }
+  .sidebar-toggle svg { width:18px; height:18px; }
+  .sidebar-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.15); z-index:300; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  .sidebar-overlay.open { opacity:1; pointer-events:auto; }
+  .sidebar { position:fixed; top:0; left:0; bottom:0; width:260px; z-index:400; background:var(--bg-card); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-right:1px solid var(--card-border); transform:translateX(-100%); transition:transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94); padding:60px 20px 40px; overflow-y:auto; }
+  .sidebar.open { transform:translateX(0); }
+  .sidebar-title { font-family:Georgia,'Times New Roman',serif; font-size:20px; font-style:italic; color:var(--text-primary); margin-bottom:28px; }
+  .sidebar-section { font-size:10px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin:20px 0 8px; }
+  .sidebar-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; cursor:pointer; color:var(--text-secondary); font-size:13px; transition:background 0.2s,color 0.2s; border:none; background:none; width:100%; text-align:left; font-family:inherit; }
+  .sidebar-item:hover { background:var(--accent-pale); color:var(--text-primary); }
+  .sidebar-item.active { background:var(--accent-pale); color:var(--accent); font-weight:500; }
+  .sidebar-item svg { width:18px; height:18px; flex-shrink:0; }
+
+  /* Page views */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* Form elements */
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:11px; color:var(--text-muted); letter-spacing:0.3px; margin-bottom:4px; display:block; }
+  .form-input {
+    width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg-card); color:var(--text-primary); font-size:14px; font-family:inherit;
+    outline:none; transition:border-color 0.2s;
+  }
+  .form-input:focus { border-color:var(--accent); }
+  .form-input::placeholder { color:var(--text-muted); }
+  select.form-input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c0a8a2' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
+
+  .btn {
+    padding:10px 20px; border-radius:12px; border:none; font-size:13px; font-weight:500;
+    cursor:pointer; font-family:inherit; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn--accent { background:var(--accent); color:#fff; }
+  .btn--accent:hover { opacity:0.9; }
+  .btn--ghost { background:var(--accent-pale); color:var(--accent); }
+  .btn--ghost:hover { background:var(--accent); color:#fff; }
+  .btn--small { padding:6px 12px; font-size:12px; }
+  .btn--danger { background:rgba(204,96,96,0.1); color:var(--danger); }
+  .btn--full { width:100%; justify-content:center; }
+
+  .btn-row { display:flex; gap:8px; margin-top:12px; }
+
+  /* Exchange page */
+  .fx-result { font-family:Georgia,serif; font-size:32px; color:var(--accent); text-align:center; margin:20px 0; line-height:1.2; }
+  .fx-sub { font-size:12px; color:var(--text-muted); text-align:center; }
+  .fx-swap { display:flex; justify-content:center; margin:10px 0; }
+
+  /* Countdown page */
+  .cd-card { background:var(--bg-card); border:1px solid var(--card-border); border-radius:var(--radius); padding:14px; margin-bottom:10px; }
+  .cd-card-title { font-size:14px; font-weight:600; color:var(--text-primary); }
+  .cd-card-date { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .cd-card-days { font-family:Georgia,serif; font-size:28px; color:var(--accent); margin-top:6px; }
+  .cd-card-unit { font-size:12px; color:var(--text-muted); font-family:-apple-system,sans-serif; }
+  .cd-card-actions { display:flex; gap:6px; margin-top:8px; }
+
+  /* Vault page */
+  .vault-lock { text-align:center; padding:60px 20px; }
+  .vault-lock-icon { font-size:48px; margin-bottom:16px; color:var(--text-muted); }
+  .vault-lock-text { font-size:14px; color:var(--text-secondary); margin-bottom:20px; }
+  .vault-entry { background:var(--bg-card); border:1px solid var(--card-border); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; }
+  .vault-entry-name { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .vault-entry-user { font-size:11px; color:var(--text-muted); margin-top:1px; }
+  .vault-entry-actions { display:flex; gap:4px; }
+  .vault-entry-actions button { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px; border-radius:6px; }
+  .vault-entry-actions button:hover { background:var(--accent-pale); color:var(--accent); }
+  .vault-entry-actions svg { width:16px; height:16px; }
+  .pw-display { font-family:monospace; font-size:13px; color:var(--text-secondary); margin-top:4px; letter-spacing:1px; }
+  .pw-gen { display:flex; gap:8px; align-items:center; margin-top:8px; }
+  .pw-gen-output { flex:1; font-family:monospace; font-size:13px; padding:8px 10px; border-radius:10px; background:var(--accent-pale); color:var(--text-primary); word-break:break-all; min-height:36px; }
+
+  /* Modal */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.2); z-index:500; display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--bg); border-radius:20px; padding:24px; width:100%; max-width:380px; max-height:80vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.15); }
+  .modal-title { font-size:16px; font-weight:600; margin-bottom:16px; color:var(--text-primary); }
+
+  @media (prefers-reduced-motion:reduce) { .card,.sidebar { transition:none; } }
+</style>
+
+<div class="app" style="position:relative;">
+  <header class="header">
+    <div class="header-date" id="dateDisplay"></div>
+    <div class="header-title" id="pageTitle">Zoe's Toolkit</div>
+  </header>
+
+  <!-- Dashboard -->
+  <div class="page active" id="page-dashboard">
+    <div class="section-label">Health</div>
+    <div class="grid">
+      <div class="card" onclick="navigate('health')">
+        <div class="c-icon ic-step"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <div class="c-label">今日步数</div>
+        <div class="c-big">6,842</div>
+        <div class="mini-chart" id="stepsChart"></div>
+      </div>
+      <div class="card" onclick="navigate('health')">
+        <div class="c-icon ic-hr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <div class="c-label">心率</div>
+        <div class="c-big">72 <span class="c-unit">bpm</span></div>
+        <div class="sparkline" id="heartSparkline"></div>
+      </div>
+      <div class="card card--row" onclick="navigate('health')">
+        <div class="c-icon ic-sl" style="margin-bottom:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg></div>
+        <div><div class="c-big" style="font-size:18px">7.5 <span class="c-unit">hrs</span></div><div class="c-label">23:20 – 06:50</div></div>
+      </div>
+      <div class="card card--row" onclick="navigate('weight')">
+        <div class="c-icon ic-wt" style="margin-bottom:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5h11l1 13H5.5z"/><path d="M8.5 6.5a3.5 3.5 0 0 1 7 0"/></svg></div>
+        <div><div class="c-big" style="font-size:18px" id="dashWeight">--</div><div class="c-label badge--green" id="dashWeightDelta"></div></div>
+      </div>
+      <div class="card card--row" onclick="navigate('period')">
+        <div class="c-icon ic-pe" style="margin-bottom:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg></div>
+        <div><div class="c-big" style="font-size:18px" id="dashPeriod">--</div><div class="badge badge--rose" id="dashPeriodPhase"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exchange -->
+  <div class="page" id="page-exchange">
+    <div class="section-label">汇率换算</div>
+    <div class="card card--static" style="cursor:default">
+      <div class="form-group">
+        <label class="form-label">金额</label>
+        <input class="form-input" type="number" id="fxAmount" value="1000" oninput="calcFx()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">从</label>
+        <select class="form-input" id="fxFrom" onchange="calcFx()">
+          <option value="JPY">JPY 日元</option>
+          <option value="CNY">CNY 人民币</option>
+          <option value="USD">USD 美元</option>
+        </select>
+      </div>
+      <div class="fx-swap"><button class="btn btn--ghost btn--small" onclick="swapFx()">↕ 交换</button></div>
+      <div class="form-group">
+        <label class="form-label">到</label>
+        <select class="form-input" id="fxTo" onchange="calcFx()">
+          <option value="CNY" selected>CNY 人民币</option>
+          <option value="JPY">JPY 日元</option>
+          <option value="USD">USD 美元</option>
+        </select>
+      </div>
+      <div class="fx-result" id="fxResult">--</div>
+      <div class="fx-sub" id="fxRate"></div>
+    </div>
+    <div class="card card--static" style="cursor:default;margin-top:10px;padding:10px 14px">
+      <div class="c-label" style="text-align:center">汇率每次打开时手动更新，或点下方刷新</div>
+      <div class="btn-row" style="justify-content:center"><button class="btn btn--ghost btn--small" onclick="promptRates()">编辑汇率</button></div>
+    </div>
+  </div>
+
+  <!-- Countdown -->
+  <div class="page" id="page-countdown">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="section-label" style="margin:0">倒计时</div>
+      <button class="btn btn--accent btn--small" onclick="openCdModal()">+ 添加</button>
+    </div>
+    <div id="cdList" style="margin-top:12px"></div>
+  </div>
+
+  <!-- Vault -->
+  <div class="page" id="page-vault">
+    <div class="section-label">保险箱</div>
+    <div id="vaultLock" class="vault-lock">
+      <div class="vault-lock-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg></div>
+      <div class="vault-lock-text">输入主密码解锁</div>
+      <div class="form-group"><input class="form-input" type="password" id="vaultPw" placeholder="主密码" onkeydown="if(event.key==='Enter')unlockVault()"></div>
+      <button class="btn btn--accent btn--full" onclick="unlockVault()">解锁</button>
+      <div style="margin-top:12px"><button class="btn btn--ghost btn--small btn--full" onclick="initVault()">首次使用？设置主密码</button></div>
+    </div>
+    <div id="vaultContent" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input class="form-input" type="text" id="vaultSearch" placeholder="搜索..." oninput="renderVault()" style="flex:1">
+        <button class="btn btn--accent btn--small" onclick="openVaultModal()">+ 添加</button>
+      </div>
+      <div id="vaultList"></div>
+      <div class="btn-row" style="margin-top:16px;justify-content:center">
+        <button class="btn btn--ghost btn--small" onclick="lockVault()">锁定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weight -->
+  <div class="page" id="page-weight">
+    <div class="section-label">体重记录</div>
+    <div class="card card--static" style="cursor:default">
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div class="form-group" style="flex:1;margin-bottom:0">
+          <label class="form-label">今日体重 (kg)</label>
+          <input class="form-input" type="number" step="0.1" id="weightInput" placeholder="52.3">
+        </div>
+        <button class="btn btn--accent" onclick="saveWeight()" style="margin-bottom:0;height:42px">记录</button>
+      </div>
+    </div>
+    <div class="section-label">趋势</div>
+    <div class="card card--static" style="cursor:default">
+      <div id="weightChartWrap"></div>
+      <div id="weightSummary" style="text-align:center;margin-top:8px"></div>
+    </div>
+    <div class="section-label">历史记录</div>
+    <div id="weightHistory"></div>
+  </div>
+
+  <!-- Period -->
+  <div class="page" id="page-period">
+    <div class="section-label">经期记录</div>
+    <div class="card card--static" style="cursor:default;text-align:center">
+      <div id="periodStatus"></div>
+      <div class="btn-row" style="justify-content:center;margin-top:14px">
+        <button class="btn btn--accent" id="periodToggleBtn" onclick="togglePeriod()">来了</button>
+      </div>
+    </div>
+    <div class="section-label">历史记录</div>
+    <div id="periodHistory"></div>
+  </div>
+
+  <!-- Settings -->
+  <div class="page" id="page-settings">
+    <div class="section-label">设置</div>
+    <div class="card card--static" style="cursor:default">
+      <div class="c-title" style="margin-bottom:8px">数据管理</div>
+      <div class="btn-row">
+        <button class="btn btn--ghost btn--small" onclick="exportData()">导出备份</button>
+        <button class="btn btn--ghost btn--small" onclick="document.getElementById('importFile').click()">导入备份</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+    <div class="card card--static" style="cursor:default;margin-top:10px">
+      <div class="c-title" style="margin-bottom:8px">关于</div>
+      <div class="c-label">Zoe's Toolkit v1.0</div>
+      <div class="c-label" style="margin-top:4px">数据全部存储在本地，不会上传</div>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<button class="sidebar-toggle" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg></button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-title">Zoe's Toolkit</div>
+  <div class="sidebar-section">首页</div>
+  <button class="sidebar-item active" data-page="dashboard" onclick="navigate('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Dashboard</button>
+  <div class="sidebar-section">健康</div>
+  <button class="sidebar-item" data-page="health" onclick="navigate('health')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>步数 · 心率 · 睡眠</button>
+  <button class="sidebar-item" data-page="weight" onclick="navigate('weight')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5h11l1 13H5.5z"/><path d="M8.5 6.5a3.5 3.5 0 0 1 7 0"/></svg>体重记录</button>
+  <button class="sidebar-item" data-page="period" onclick="navigate('period')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>经期记录</button>
+  <div class="sidebar-section">工具</div>
+  <button class="sidebar-item" data-page="exchange" onclick="navigate('exchange')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 17L17 17"/><polyline points="13 21 17 17 13 13"/><path d="M22 7L7 7"/><polyline points="11 3 7 7 11 11"/></svg>汇率换算</button>
+  <button class="sidebar-item" data-page="countdown" onclick="navigate('countdown')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>倒计时</button>
+  <button class="sidebar-item" data-page="vault" onclick="navigate('vault')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>保险箱</button>
+  <div class="sidebar-section">系统</div>
+  <button class="sidebar-item" data-page="settings" onclick="navigate('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>设置</button>
+</nav>
+
+<!-- Modals -->
+<div class="modal-overlay" id="cdModal">
+  <div class="modal">
+    <div class="modal-title" id="cdModalTitle">添加倒计时</div>
+    <div class="form-group"><label class="form-label">名称</label><input class="form-input" type="text" id="cdName" placeholder="筑波大学入学"></div>
+    <div class="form-group"><label class="form-label">目标日期</label><input class="form-input" type="date" id="cdDate"></div>
+    <div class="btn-row"><button class="btn btn--accent" onclick="saveCd()">保存</button><button class="btn btn--ghost" onclick="closeCdModal()">取消</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="vaultModal">
+  <div class="modal">
+    <div class="modal-title">添加密码</div>
+    <div class="form-group"><label class="form-label">名称</label><input class="form-input" type="text" id="veName" placeholder="微信"></div>
+    <div class="form-group"><label class="form-label">用户名</label><input class="form-input" type="text" id="veUser" placeholder="zoezhu"></div>
+    <div class="form-group"><label class="form-label">密码</label><input class="form-input" type="text" id="vePw" placeholder="密码"></div>
+    <div class="pw-gen">
+      <div class="pw-gen-output" id="pwGenOut"></div>
+      <button class="btn btn--ghost btn--small" onclick="genPw()">生成</button>
+    </div>
+    <div class="form-group" style="margin-top:10px"><label class="form-label">备注</label><input class="form-input" type="text" id="veNote" placeholder="选填"></div>
+    <div class="btn-row"><button class="btn btn--accent" onclick="saveVaultEntry()">保存</button><button class="btn btn--ghost" onclick="closeVaultModal()">取消</button></div>
+  </div>
+</div>
+
+<script>
+// ===== Navigation =====
+const titles = { dashboard:"Zoe's Toolkit", exchange:'汇率换算', countdown:'倒计时', vault:'保险箱', weight:'体重记录', period:'经期记录', health:'步数 · 心率 · 睡眠', settings:'设置' };
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  document.getElementById('pageTitle').textContent = titles[page] || "Zoe's Toolkit";
+  document.querySelectorAll('.sidebar-item').forEach(i => {
+    i.classList.toggle('active', i.dataset.page === page);
+  });
+  closeSidebar();
+  if (page === 'countdown') renderCd();
+  if (page === 'weight') renderWeight();
+  if (page === 'period') renderPeriod();
+  if (page === 'exchange') calcFx();
+  if (page === 'dashboard') updateDash();
+  setTimeout(() => drawSakura(), 50);
+}
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+
+// ===== Date =====
+const now = new Date();
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+document.getElementById('dateDisplay').textContent = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+
+// ===== Dashboard Charts =====
+const stepsData = [4200,8100,5600,7300,6100,9200,6842];
+const maxS = Math.max(...stepsData);
+const ch = document.getElementById('stepsChart');
+stepsData.forEach((v,i) => { const b=document.createElement('div'); b.className='mini-bar'; b.style.height=(v/maxS*100)+'%'; b.style.background=i===6?'var(--health-green)':'rgba(114,179,126,0.2)'; ch.appendChild(b); });
+
+const hd=[74,72,78,71,69,73,75,72,70,74,76,72];
+const sp=document.getElementById('heartSparkline');
+const ns='http://www.w3.org/2000/svg';
+const sv=document.createElementNS(ns,'svg'); sv.setAttribute('viewBox','0 0 120 28'); sv.setAttribute('preserveAspectRatio','none');
+const mn=Math.min(...hd),mx=Math.max(...hd);
+const pts=hd.map((v,i)=>{const x=(i/(hd.length-1))*120;const y=24-((v-mn)/(mx-mn))*20;return`${x},${y}`;});
+const ar=document.createElementNS(ns,'path'); ar.setAttribute('d',`M${pts[0]} `+pts.slice(1).map(p=>'L'+p).join(' ')+' L120,28 L0,28 Z'); ar.setAttribute('fill','var(--accent-pale)'); sv.appendChild(ar);
+const ln=document.createElementNS(ns,'polyline'); ln.setAttribute('points',pts.join(' ')); ln.setAttribute('fill','none'); ln.setAttribute('stroke','var(--accent)'); ln.setAttribute('stroke-width','1.5'); ln.setAttribute('stroke-linecap','round'); ln.setAttribute('stroke-linejoin','round'); sv.appendChild(ln);
+const dot=document.createElementNS(ns,'circle'); const lp=pts[pts.length-1].split(','); dot.setAttribute('cx',lp[0]); dot.setAttribute('cy',lp[1]); dot.setAttribute('r','2'); dot.setAttribute('fill','var(--accent)'); sv.appendChild(dot);
+sp.appendChild(sv);
+
+// ===== Exchange =====
+let rates = JSON.parse(localStorage.getItem('zt_rates') || '{"JPY_CNY":0.0485,"USD_CNY":7.265,"JPY_USD":0.00668}');
+function getRate(f,t) { if(f===t)return 1; const k=f+'_'+t; if(rates[k])return rates[k]; const rk=t+'_'+f; if(rates[rk])return 1/rates[rk]; if(f==='JPY'&&t==='USD')return rates.JPY_CNY/rates.USD_CNY; if(f==='USD'&&t==='JPY')return rates.USD_CNY/rates.JPY_CNY; return 1; }
+function calcFx() { const a=parseFloat(document.getElementById('fxAmount').value)||0; const f=document.getElementById('fxFrom').value; const t=document.getElementById('fxTo').value; const r=getRate(f,t); const result=(a*r); document.getElementById('fxResult').textContent=result.toFixed(2)+' '+t; document.getElementById('fxRate').textContent=`1 ${f} = ${r.toFixed(6)} ${t}`; }
+function swapFx() { const f=document.getElementById('fxFrom'),t=document.getElementById('fxTo'); const tmp=f.value; f.value=t.value; t.value=tmp; calcFx(); }
+function promptRates() { const j=prompt('编辑汇率 (JSON)\n例: {"JPY_CNY":0.0485,"USD_CNY":7.265}', JSON.stringify(rates)); if(j){try{rates=JSON.parse(j);localStorage.setItem('zt_rates',j);calcFx();}catch(e){alert('格式错误');}} }
+
+// ===== Countdown =====
+let cdEditId = null;
+function getCd() { return JSON.parse(localStorage.getItem('zt_countdowns') || '[]'); }
+function saveCdData(d) { localStorage.setItem('zt_countdowns', JSON.stringify(d)); }
+function renderCd() {
+  const list=document.getElementById('cdList'); const cds=getCd(); const today=new Date(); today.setHours(0,0,0,0);
+  if(!cds.length){list.innerHTML='<div class="c-label" style="text-align:center;padding:40px 0">还没有倒计时，点右上角添加</div>';return;}
+  list.innerHTML=cds.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((c,i)=>{
+    const target=new Date(c.date); target.setHours(0,0,0,0);
+    const diff=Math.ceil((target-today)/(86400000));
+    const dateStr=c.date.replace(/-/g,'/');
+    return `<div class="cd-card"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="cd-card-title">${esc(c.name)}</div><div class="cd-card-date">${dateStr}</div></div><div class="cd-card-days">${diff<0?'已过'+Math.abs(diff):diff} <span class="cd-card-unit">${diff<0?'天':'天'}</span></div></div><div class="cd-card-actions"><button class="btn btn--ghost btn--small" onclick="editCd(${i})">编辑</button><button class="btn btn--danger btn--small" onclick="delCd(${i})">删除</button></div></div>`;
+  }).join('');
+}
+function openCdModal(){ cdEditId=null; document.getElementById('cdName').value=''; document.getElementById('cdDate').value=''; document.getElementById('cdModalTitle').textContent='添加倒计时'; document.getElementById('cdModal').classList.add('open'); }
+function closeCdModal(){ document.getElementById('cdModal').classList.remove('open'); }
+function saveCd(){ const n=document.getElementById('cdName').value.trim(); const d=document.getElementById('cdDate').value; if(!n||!d)return; const cds=getCd(); if(cdEditId!==null){cds[cdEditId]={name:n,date:d};}else{cds.push({name:n,date:d});} saveCdData(cds); closeCdModal(); renderCd(); }
+function editCd(i){ const cds=getCd(); cdEditId=i; document.getElementById('cdName').value=cds[i].name; document.getElementById('cdDate').value=cds[i].date; document.getElementById('cdModalTitle').textContent='编辑倒计时'; document.getElementById('cdModal').classList.add('open'); }
+function delCd(i){ if(!confirm('删除这个倒计时？'))return; const cds=getCd(); cds.splice(i,1); saveCdData(cds); renderCd(); }
+
+// ===== Vault =====
+let vaultKey = null;
+let vaultData = [];
+async function deriveKey(pw, salt) {
+  const enc = new TextEncoder();
+  const keyMat = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'}, keyMat, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
+}
+async function encryptData(key, data) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, enc.encode(JSON.stringify(data)));
+  return {iv:Array.from(iv), ct:Array.from(new Uint8Array(ct))};
+}
+async function decryptData(key, obj) {
+  const iv = new Uint8Array(obj.iv);
+  const ct = new Uint8Array(obj.ct);
+  const dec = await crypto.subtle.decrypt({name:'AES-GCM',iv}, key, ct);
+  return JSON.parse(new TextDecoder().decode(dec));
+}
+async function initVault() {
+  const pw = prompt('设置主密码（请牢记！忘了无法找回）');
+  if(!pw||pw.length<4){alert('密码至少4位');return;}
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await deriveKey(pw, salt);
+  const encrypted = await encryptData(key, []);
+  localStorage.setItem('zt_vault', JSON.stringify({salt:Array.from(salt),...encrypted}));
+  vaultKey=key; vaultData=[];
+  document.getElementById('vaultLock').style.display='none';
+  document.getElementById('vaultContent').style.display='block';
+  renderVault();
+}
+async function unlockVault() {
+  const pw = document.getElementById('vaultPw').value;
+  const stored = JSON.parse(localStorage.getItem('zt_vault')||'null');
+  if(!stored){alert('请先设置主密码');return;}
+  try {
+    const salt = new Uint8Array(stored.salt);
+    const key = await deriveKey(pw, salt);
+    vaultData = await decryptData(key, stored);
+    vaultKey = key;
+    document.getElementById('vaultLock').style.display='none';
+    document.getElementById('vaultContent').style.display='block';
+    document.getElementById('vaultPw').value='';
+    renderVault();
+  } catch(e) { alert('密码错误'); }
+}
+function lockVault() { vaultKey=null; vaultData=[]; document.getElementById('vaultLock').style.display='block'; document.getElementById('vaultContent').style.display='none'; }
+async function saveVaultData() {
+  const stored = JSON.parse(localStorage.getItem('zt_vault'));
+  const salt = new Uint8Array(stored.salt);
+  const encrypted = await encryptData(vaultKey, vaultData);
+  localStorage.setItem('zt_vault', JSON.stringify({salt:Array.from(salt),...encrypted}));
+}
+function renderVault() {
+  const q = (document.getElementById('vaultSearch').value||'').toLowerCase();
+  const filtered = vaultData.filter(e => !q || e.name.toLowerCase().includes(q) || (e.user||'').toLowerCase().includes(q));
+  const list = document.getElementById('vaultList');
+  if(!filtered.length){list.innerHTML='<div class="c-label" style="text-align:center;padding:30px 0">'+(q?'没有找到':'还没有密码条目')+'</div>';return;}
+  list.innerHTML = filtered.map((e,i) => {
+    const idx = vaultData.indexOf(e);
+    return `<div class="vault-entry"><div><div class="vault-entry-name">${esc(e.name)}</div><div class="vault-entry-user">${esc(e.user||'')}</div><div class="pw-display" id="pw${idx}" style="display:none">${esc(e.pw)}</div></div><div class="vault-entry-actions"><button onclick="togglePw(${idx})" title="显示密码"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button onclick="copyPw(${idx})" title="复制"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button onclick="delVaultEntry(${idx})" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>`;
+  }).join('');
+}
+function togglePw(i){const el=document.getElementById('pw'+i);el.style.display=el.style.display==='none'?'block':'none';}
+function copyPw(i){navigator.clipboard.writeText(vaultData[i].pw);const btn=event.currentTarget;btn.style.color='var(--health-green)';setTimeout(()=>btn.style.color='',1000);}
+async function delVaultEntry(i){if(!confirm('删除？'))return;vaultData.splice(i,1);await saveVaultData();renderVault();}
+function openVaultModal(){document.getElementById('veName').value='';document.getElementById('veUser').value='';document.getElementById('vePw').value='';document.getElementById('veNote').value='';document.getElementById('pwGenOut').textContent='';document.getElementById('vaultModal').classList.add('open');}
+function closeVaultModal(){document.getElementById('vaultModal').classList.remove('open');}
+async function saveVaultEntry(){const n=document.getElementById('veName').value.trim();const u=document.getElementById('veUser').value.trim();const p=document.getElementById('vePw').value;const note=document.getElementById('veNote').value.trim();if(!n||!p)return;vaultData.push({name:n,user:u,pw:p,note:note});await saveVaultData();closeVaultModal();renderVault();}
+function genPw(){const c='abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';let p='';for(let i=0;i<16;i++)p+=c[Math.floor(Math.random()*c.length)];document.getElementById('pwGenOut').textContent=p;document.getElementById('vePw').value=p;}
+
+// ===== Weight =====
+function getWeights(){return JSON.parse(localStorage.getItem('zt_weights')||'[]');}
+function saveWeight(){
+  const w=parseFloat(document.getElementById('weightInput').value);
+  if(!w)return;
+  const data=getWeights();
+  const today=new Date().toISOString().slice(0,10);
+  const existing=data.findIndex(d=>d.date===today);
+  if(existing>=0){data[existing].weight=w;}else{data.push({date:today,weight:w});}
+  localStorage.setItem('zt_weights',JSON.stringify(data));
+  document.getElementById('weightInput').value='';
+  renderWeight();updateDash();
+}
+function drawWeightChart(){
+  const wrap=document.getElementById('weightChartWrap');if(!wrap)return;
+  const data=getWeights().slice(-14);
+  if(data.length<2){wrap.innerHTML='<div class="c-label" style="text-align:center;padding:40px 0">记录 2 次以上显示趋势图</div>';document.getElementById('weightSummary').innerHTML='';return;}
+  const vals=data.map(d=>d.weight);const mn=Math.min(...vals),mx=Math.max(...vals);
+  const range=mx-mn||1;const svgW=340,svgH=160,pad=25,graphW=svgW-pad*2,graphH=svgH-pad*2;
+  const pts=data.map((d,i)=>({x:pad+(i/(data.length-1))*graphW,y:pad+graphH-(((d.weight-mn)/range)*graphH)}));
+  let curvePath='M'+pts[0].x+','+pts[0].y;
+  for(let i=1;i<pts.length;i++){const p=pts[i-1],c=pts[i];const cpx=(p.x+c.x)/2;curvePath+=` C${cpx},${p.y} ${cpx},${c.y} ${c.x},${c.y}`;}
+  const areaPath=curvePath+` L${pts[pts.length-1].x},${svgH-pad} L${pts[0].x},${svgH-pad} Z`;
+  let gridLines='';for(let i=0;i<=4;i++){const y=pad+graphH*(i/4);gridLines+=`<line x1="${pad}" y1="${y}" x2="${svgW-pad}" y2="${y}" stroke="rgba(210,180,175,0.15)" stroke-width="0.5"/>`;}
+  const showLabels=data.length<=7?data.map((_,i)=>i):[0,Math.floor(data.length/2),data.length-1];
+  let labels='';showLabels.forEach(i=>{labels+=`<text x="${pts[i].x}" y="${svgH-6}" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="-apple-system,sans-serif">${data[i].date.slice(5)}</text>`;});
+  let dots='';pts.forEach((p,i)=>{const r=i===pts.length-1?4:2.5;const fill=i===pts.length-1?'var(--accent)':'var(--bg-card)';dots+=`<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${fill}" stroke="var(--accent)" stroke-width="1.5"/>`;});
+  let valLabels='';pts.forEach((p,i)=>{if(i===0||i===pts.length-1){valLabels+=`<text x="${p.x}" y="${p.y-8}" text-anchor="middle" fill="var(--accent)" font-size="10" font-weight="600" font-family="-apple-system,sans-serif">${vals[i]}</text>`;}});
+  wrap.innerHTML=`<svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;height:auto;display:block">${gridLines}<path d="${areaPath}" fill="var(--accent-pale)"/><path d="${curvePath}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dots}${labels}${valLabels}</svg>`;
+  const sumEl=document.getElementById('weightSummary');
+  const last=vals[vals.length-1],first=vals[0],delta=(last-first).toFixed(1);
+  sumEl.innerHTML=`<span class="c-label">最近 ${data.length} 次：${first} → ${last} kg（<span style="color:${delta>0?'var(--danger)':'var(--health-green)'}">${delta>0?'+':''}${delta}</span>）</span>`;
+}
+function renderWeight(){
+  const data=getWeights().slice(-20).reverse();
+  const el=document.getElementById('weightHistory');
+  drawWeightChart();
+  if(!data.length){el.innerHTML='<div class="c-label" style="text-align:center;padding:30px 0">还没有记录</div>';return;}
+  el.innerHTML=data.map((d,i)=>{
+    const prev=data[i+1];let delta='';
+    if(prev){const diff=(d.weight-prev.weight).toFixed(1);delta=`<span style="color:${diff>0?'var(--danger)':'var(--health-green)'}"> ${diff>0?'↑':'↓'}${Math.abs(diff)}</span>`;}
+    return `<div class="cd-card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="c-title">${d.weight} kg${delta}</div><div class="c-label">${d.date.slice(5)}</div></div></div>`;
+  }).join('');
+}
+
+// ===== Period =====
+function getPeriods(){return JSON.parse(localStorage.getItem('zt_periods')||'[]');}
+function savePeriods(d){localStorage.setItem('zt_periods',JSON.stringify(d));}
+function togglePeriod(){
+  const periods=getPeriods();
+  const last=periods[periods.length-1];
+  if(last&&!last.end){
+    last.end=new Date().toISOString().slice(0,10);
+    savePeriods(periods);
+  } else {
+    periods.push({start:new Date().toISOString().slice(0,10),end:null});
+    savePeriods(periods);
+  }
+  renderPeriod();updateDash();
+}
+function renderPeriod(){
+  const periods=getPeriods();
+  const last=periods[periods.length-1];
+  const statusEl=document.getElementById('periodStatus');
+  const btn=document.getElementById('periodToggleBtn');
+  if(!periods.length){
+    statusEl.innerHTML='<div class="c-label" style="padding:10px 0">还没有记录，来的时候点下面</div>';
+    btn.textContent='来了';btn.className='btn btn--accent';
+  } else if(last&&!last.end){
+    const start=new Date(last.start);const today=new Date();today.setHours(0,0,0,0);start.setHours(0,0,0,0);
+    const day=Math.floor((today-start)/86400000)+1;
+    statusEl.innerHTML=`<div class="c-big" style="font-size:28px;color:var(--period-rose)">Day ${day}</div><div class="badge badge--rose" style="margin-top:6px">经期中</div><div class="c-label" style="margin-top:6px">${last.start} 开始</div>`;
+    btn.textContent='结束了';btn.className='btn btn--ghost';
+  } else {
+    const lastEnd=new Date(last.end);const today=new Date();today.setHours(0,0,0,0);lastEnd.setHours(0,0,0,0);
+    const daysSince=Math.floor((today-lastEnd)/86400000);
+    statusEl.innerHTML=`<div class="c-big" style="font-size:28px">距上次结束</div><div class="c-big" style="font-size:32px;color:var(--accent);margin-top:4px">${daysSince} <span class="c-unit">天</span></div>`;
+    btn.textContent='来了';btn.className='btn btn--accent';
+  }
+  const histEl=document.getElementById('periodHistory');
+  if(!periods.length){histEl.innerHTML='';return;}
+  histEl.innerHTML=periods.slice().reverse().map((p,i)=>{
+    const dur=p.end?Math.floor((new Date(p.end)-new Date(p.start))/86400000)+1+'天':'进行中';
+    return `<div class="cd-card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="c-title">${p.start.slice(5)} → ${p.end?p.end.slice(5):'...'}</div><div class="c-label">${dur}</div></div><button class="btn btn--danger btn--small" onclick="delPeriod(${periods.length-1-i})">删除</button></div></div>`;
+  }).join('');
+}
+function delPeriod(i){if(!confirm('删除这条记录？'))return;const p=getPeriods();p.splice(i,1);savePeriods(p);renderPeriod();updateDash();}
+
+// ===== Dashboard update =====
+function updateDash(){
+  const weights=getWeights();
+  if(weights.length){const last=weights[weights.length-1];document.getElementById('dashWeight').innerHTML=last.weight+' <span class="c-unit">kg</span>';
+    if(weights.length>=2){const prev=weights[weights.length-2];const d=(last.weight-prev.weight).toFixed(1);document.getElementById('dashWeightDelta').textContent=(d>0?'↑':'↓')+' '+Math.abs(d)+' 上次';}}
+  const periods=getPeriods();
+  if(periods.length){
+    const last=periods[periods.length-1];
+    if(last&&!last.end){const day=Math.floor((new Date()-new Date(last.start))/86400000)+1;document.getElementById('dashPeriod').textContent='Day '+day;document.getElementById('dashPeriodPhase').textContent='经期中';}
+    else if(last&&last.end){const days=Math.floor((new Date()-new Date(last.end))/86400000);document.getElementById('dashPeriod').textContent=days+'天';document.getElementById('dashPeriodPhase').textContent='距上次结束';}
+  }
+}
+
+// ===== Utility =====
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ===== Export/Import =====
+function exportData(){
+  const data={rates,countdowns:getCd(),weights:getWeights(),periods:getPeriods()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='zoe-toolkit-backup.json';a.click();
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=function(){try{const d=JSON.parse(r.result);
+    if(d.rates){rates=d.rates;localStorage.setItem('zt_rates',JSON.stringify(rates));}
+    if(d.countdowns)saveCdData(d.countdowns);
+    if(d.weights)localStorage.setItem('zt_weights',JSON.stringify(d.weights));
+    if(d.periods)localStorage.setItem('zt_periods',JSON.stringify(d.periods));
+    alert('导入成功！');updateDash();
+  }catch(e){alert('文件格式错误');}};r.readAsText(f);
+}
+
+// ===== Sakura =====
+function drawSakura() {
+  const app=document.querySelector('.app');
+  let layer=app.querySelector('.sakura-layer');
+  if(!layer){layer=document.createElement('div');layer.className='sakura-layer';const c=document.createElement('canvas');layer.appendChild(c);app.appendChild(layer);}
+  const canvas=layer.querySelector('canvas');
+  const ctx=canvas.getContext('2d');
+  function rand(a,b){return a+Math.random()*(b-a);}
+  function drawFlower(cx,cy,size,rotation,alpha){
+    ctx.globalAlpha=alpha;const petalR=size*0.38,dist=size*0.52,color='rgba(200,155,165,0.6)';
+    for(let i=0;i<5;i++){const a=rotation+(i*Math.PI*2)/5;const px=cx+Math.cos(a)*dist;const py=cy+Math.sin(a)*dist;ctx.beginPath();ctx.arc(px,py,petalR,0,Math.PI*2);ctx.fillStyle='rgba(240,218,225,0.2)';ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=0.5;ctx.stroke();}
+    ctx.beginPath();ctx.arc(cx,cy,size*0.13,0,Math.PI*2);ctx.fillStyle=color;ctx.globalAlpha=alpha*0.5;ctx.fill();ctx.globalAlpha=1;
+  }
+  function drawLeaf(cx,cy,size,angle,alpha){
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(-size*0.7,0);ctx.quadraticCurveTo(0,-size*0.35,size*0.7,0);ctx.quadraticCurveTo(0,size*0.35,-size*0.7,0);ctx.fillStyle='rgba(215,228,215,0.25)';ctx.fill();ctx.strokeStyle='rgba(165,190,158,0.45)';ctx.lineWidth=0.45;ctx.stroke();ctx.beginPath();ctx.moveTo(-size*0.5,0);ctx.lineTo(size*0.5,0);ctx.strokeStyle='rgba(165,190,158,0.3)';ctx.lineWidth=0.35;ctx.stroke();ctx.restore();
+  }
+  function drawDot(cx,cy,alpha){ctx.beginPath();ctx.arc(cx,cy,rand(0.8,1.4),0,Math.PI*2);ctx.fillStyle=`rgba(210,165,175,${alpha})`;ctx.fill();}
+  const w=app.offsetWidth,h=app.scrollHeight;canvas.width=w;canvas.height=h;canvas.style.height=h+'px';ctx.clearRect(0,0,w,h);
+  const gapX=80,gapY=70,cols=Math.ceil(w/gapX)+1,rows=Math.ceil(h/gapY)+1;
+  for(let row=0;row<rows;row++){for(let col=0;col<cols;col++){
+    const ox=(row%2===1)?gapX*0.5:0,bx=col*gapX+ox,by=row*gapY,rot=((row*7+col*13)%17)*0.37;
+    drawFlower(bx,by,rand(6,7.5),rot,rand(0.6,0.75));
+    drawFlower(bx+gapX*0.5,by+gapY*0.45,rand(3.5,5),rot+0.5,rand(0.5,0.65));
+    const la=((row+col)%3)*0.8-0.4;
+    drawLeaf(bx+gapX*0.28,by+gapY*0.22,rand(4,5.5),la,rand(0.5,0.65));
+    drawLeaf(bx+gapX*0.7,by+gapY*0.7,rand(3.5,5),la+1.2,rand(0.4,0.55));
+    drawDot(bx+gapX*0.35,by+gapY*0.6,rand(0.18,0.3));
+    drawDot(bx+gapX*0.65,by+gapY*0.15,rand(0.15,0.25));
+  }}
+}
+
+// Init
+updateDash();
+drawSakura();
+window.addEventListener('resize', drawSakura);
+</script>
